@@ -4,6 +4,26 @@ import { supabase } from '@/integrations/supabase/client';
 export type DailyTaskCode = 'read_new_book' | 'add_review' | 'add_to_reading_list' | 'share_quote';
 export type ShopCategory = 'name_color' | 'avatar_frame' | 'badge' | 'comment_highlight' | 'profile_background';
 export type BookCompletionMethod = 'auto_95pct' | 'manual' | 'time_based';
+export type WheelPrizeKind = 'coins_small' | 'coins_medium' | 'coins_large' | 'coins_jackpot' | 'featured_book' | 'multiplier';
+
+export interface MysteryDropClaim {
+  claimed: boolean;
+  reason?: 'not_authenticated' | 'not_found' | 'already_claimed';
+  title_ar?: string;
+  message_ar?: string;
+  icon?: string;
+  xp_awarded?: number;
+  coins_awarded?: number;
+}
+
+export interface WheelSpinResult {
+  spun: boolean;
+  reason?: 'not_authenticated' | 'already_spun_today';
+  prize_kind?: WheelPrizeKind;
+  prize_value?: number;
+  prize_label?: string;
+  reference_id?: string | null;
+}
 
 export interface LevelInfo {
   level: number;
@@ -99,6 +119,9 @@ export const gamification = {
     if (error) throw error;
     return (data ?? []) as ShopItem[];
   },
+  claimMysteryDrop: (code: string) =>
+    rpc<MysteryDropClaim>('gam_claim_mystery_drop', { _code: code }),
+  spinDailyWheel: () => rpc<WheelSpinResult>('gam_spin_daily_wheel'),
 };
 
 // مساعدات للواجهة
