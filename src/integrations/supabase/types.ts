@@ -2442,6 +2442,48 @@ export type Database = {
         }
         Relationships: []
       }
+      mystery_drops: {
+        Row: {
+          code: string
+          coins_reward: number
+          created_at: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          location_kind: string
+          location_ref: string
+          message_ar: string
+          title_ar: string
+          xp_reward: number
+        }
+        Insert: {
+          code: string
+          coins_reward?: number
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          location_kind: string
+          location_ref: string
+          message_ar: string
+          title_ar: string
+          xp_reward?: number
+        }
+        Update: {
+          code?: string
+          coins_reward?: number
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          location_kind?: string
+          location_ref?: string
+          message_ar?: string
+          title_ar?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       navigation_direction: {
         Row: {
           created_at: string
@@ -4344,6 +4386,7 @@ export type Database = {
           current_streak: number
           last_active_date: string | null
           last_daily_claim_date: string | null
+          last_wheel_spin_date: string | null
           longest_streak: number
           selected_avatar_frame: string | null
           selected_badge: string | null
@@ -4360,6 +4403,7 @@ export type Database = {
           current_streak?: number
           last_active_date?: string | null
           last_daily_claim_date?: string | null
+          last_wheel_spin_date?: string | null
           longest_streak?: number
           selected_avatar_frame?: string | null
           selected_badge?: string | null
@@ -4376,6 +4420,7 @@ export type Database = {
           current_streak?: number
           last_active_date?: string | null
           last_daily_claim_date?: string | null
+          last_wheel_spin_date?: string | null
           longest_streak?: number
           selected_avatar_frame?: string | null
           selected_badge?: string | null
@@ -4387,6 +4432,41 @@ export type Database = {
           xp?: number
         }
         Relationships: []
+      }
+      user_mystery_drop_claims: {
+        Row: {
+          coins_awarded: number
+          created_at: string
+          drop_id: string
+          id: string
+          user_id: string
+          xp_awarded: number
+        }
+        Insert: {
+          coins_awarded?: number
+          created_at?: string
+          drop_id: string
+          id?: string
+          user_id: string
+          xp_awarded?: number
+        }
+        Update: {
+          coins_awarded?: number
+          created_at?: string
+          drop_id?: string
+          id?: string
+          user_id?: string
+          xp_awarded?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mystery_drop_claims_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "mystery_drops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_presence: {
         Row: {
@@ -4574,6 +4654,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wheel_spins: {
+        Row: {
+          created_at: string
+          id: string
+          prize_kind: string
+          prize_label: string
+          prize_value: number
+          reference_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          prize_kind: string
+          prize_label: string
+          prize_value?: number
+          reference_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          prize_kind?: string
+          prize_label?: string
+          prize_value?: number
+          reference_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       xp_ledger: {
         Row: {
@@ -5292,6 +5402,7 @@ export type Database = {
           current_streak: number
           last_active_date: string | null
           last_daily_claim_date: string | null
+          last_wheel_spin_date: string | null
           longest_streak: number
           selected_avatar_frame: string | null
           selected_badge: string | null
@@ -5339,6 +5450,7 @@ export type Database = {
       }
       gam_award_reading_activity: { Args: { _book_id: string }; Returns: Json }
       gam_claim_daily_login: { Args: never; Returns: Json }
+      gam_claim_mystery_drop: { Args: { _code: string }; Returns: Json }
       gam_clear_cosmetic: {
         Args: { _category: Database["public"]["Enums"]["shop_item_category"] }
         Returns: Json
@@ -5362,6 +5474,7 @@ export type Database = {
       gam_get_my_state: { Args: never; Returns: Json }
       gam_purchase_shop_item: { Args: { _item_id: string }; Returns: Json }
       gam_select_cosmetic: { Args: { _item_id: string }; Returns: Json }
+      gam_spin_daily_wheel: { Args: never; Returns: Json }
       generate_author_slug: { Args: { p_name: string }; Returns: string }
       generate_book_slug: {
         Args: { p_author: string; p_title: string }
