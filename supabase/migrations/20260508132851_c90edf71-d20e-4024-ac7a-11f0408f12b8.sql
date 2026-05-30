@@ -1,1 +1,0 @@
-UPDATE public.book_submissions SET title = regexp_replace(title, '1{3,}\s*$', '') WHERE title ~ '1{3,}\s*$';

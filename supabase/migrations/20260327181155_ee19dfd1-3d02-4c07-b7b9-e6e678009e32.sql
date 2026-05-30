@@ -1,1 +1,0 @@
-ALTER TABLE public.reading_history ADD COLUMN IF NOT EXISTS reading_time_minutes integer NOT NULL DEFAULT 0;

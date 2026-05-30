@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS public.page_meta_tags CASCADE;

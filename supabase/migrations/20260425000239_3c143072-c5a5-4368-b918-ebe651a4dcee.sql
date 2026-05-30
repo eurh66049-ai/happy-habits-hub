@@ -1,1 +1,0 @@
-drop table if exists public.tts_key_rotation_state;
