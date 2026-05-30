@@ -126,52 +126,112 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-    // بناء شروط OR
-    const orParts: string[] = [];
-    for (const k of interpreted.keywords) {
-      const t = escapeIlike(k);
-      if (t.length < 2) continue;
-      orParts.push(`title.ilike.%${t}%`);
-      orParts.push(`description.ilike.%${t}%`);
-    }
-    for (const a of interpreted.authors) {
+    // تقليل عدد شروط البحث لتجنّب تجاوز مهلة قاعدة البيانات
+    const topKeywords = interpreted.keywords.slice(0, 3);
+    const topAuthors = interpreted.authors.slice(0, 2);
+    const topCategories = interpreted.categories.slice(0, 2);
+    const finalLimit = Math.min(24, Math.max(1, limit));
+
+    type Row = {
+      id: string;
+      title: string;
+      author: string | null;
+      category: string | null;
+      description: string | null;
+      slug: string | null;
+      rating: number | null;
+      views: number | null;
+      cover_image_url: string | null;
+      s3_cover_image_url: string | null;
+    };
+
+    const SELECT_COLS =
+      "id, title, author, category, description, slug, rating, views, cover_image_url, s3_cover_image_url";
+
+    // ننفّذ عدة استعلامات صغيرة بالتوازي بدل OR ضخم واحد
+    const queries: Promise<{ data: Row[] | null; error: any }>[] = [];
+
+    for (const a of topAuthors) {
       const t = escapeIlike(a);
       if (t.length < 2) continue;
-      orParts.push(`author.ilike.%${t}%`);
+      queries.push(
+        supabase
+          .from("book_submissions")
+          .select(SELECT_COLS)
+          .eq("status", "approved")
+          .ilike("author", `%${t}%`)
+          .order("views", { ascending: false })
+          .limit(finalLimit) as any,
+      );
     }
-    for (const c of interpreted.categories) {
+
+    for (const c of topCategories) {
       const t = escapeIlike(c);
       if (t.length < 2) continue;
-      orParts.push(`category.ilike.%${t}%`);
+      queries.push(
+        supabase
+          .from("book_submissions")
+          .select(SELECT_COLS)
+          .eq("status", "approved")
+          .ilike("category", `%${t}%`)
+          .order("views", { ascending: false })
+          .limit(finalLimit) as any,
+      );
     }
 
-    // احتياط: لو الذكاء لم يستخرج شيئاً، ابحث بالنص الأصلي
-    if (orParts.length === 0) {
+    for (const k of topKeywords) {
+      const t = escapeIlike(k);
+      if (t.length < 2) continue;
+      queries.push(
+        supabase
+          .from("book_submissions")
+          .select(SELECT_COLS)
+          .eq("status", "approved")
+          .ilike("title", `%${t}%`)
+          .order("views", { ascending: false })
+          .limit(finalLimit) as any,
+      );
+    }
+
+    // احتياط: لو لم يستخرج الذكاء شيئاً
+    if (queries.length === 0) {
       const raw = escapeIlike(query);
-      orParts.push(`title.ilike.%${raw}%`);
-      orParts.push(`author.ilike.%${raw}%`);
-      orParts.push(`description.ilike.%${raw}%`);
+      queries.push(
+        supabase
+          .from("book_submissions")
+          .select(SELECT_COLS)
+          .eq("status", "approved")
+          .ilike("title", `%${raw}%`)
+          .order("views", { ascending: false })
+          .limit(finalLimit) as any,
+      );
+      queries.push(
+        supabase
+          .from("book_submissions")
+          .select(SELECT_COLS)
+          .eq("status", "approved")
+          .ilike("author", `%${raw}%`)
+          .order("views", { ascending: false })
+          .limit(finalLimit) as any,
+      );
     }
 
-    const { data, error } = await supabase
-      .from("book_submissions")
-      .select(
-        "id, title, author, category, description, slug, rating, views, cover_image_url, s3_cover_image_url",
-      )
-      .eq("status", "approved")
-      .or(orParts.join(","))
-      .order("views", { ascending: false })
-      .limit(Math.min(40, Math.max(1, limit)));
-
-    if (error) {
-      console.error("DB search error:", error);
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const settled = await Promise.allSettled(queries);
+    const merged = new Map<string, Row>();
+    for (const s of settled) {
+      if (s.status === "fulfilled" && s.value.data) {
+        for (const row of s.value.data) {
+          if (!merged.has(row.id)) merged.set(row.id, row);
+        }
+      } else if (s.status === "fulfilled" && s.value.error) {
+        console.warn("partial query error:", s.value.error.message);
+      }
     }
 
-    const results = (data || []).map((b: any) => ({
+    const results = Array.from(merged.values())
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, finalLimit)
+      .map((b: any) => ({
       ...b,
       cover_image_url: b.s3_cover_image_url || b.cover_image_url,
     }));
