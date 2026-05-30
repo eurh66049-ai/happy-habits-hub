@@ -102,6 +102,15 @@ const DailyLuckWheel: React.FC = () => {
     return () => { cancelled = true; };
   }, [user?.id]);
 
+  useEffect(() => {
+    return () => {
+      if (tickTimerRef.current) {
+        clearInterval(tickTimerRef.current);
+        tickTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const handleSpin = async () => {
     if (spinning || alreadySpun) return;
     setSpinning(true);
