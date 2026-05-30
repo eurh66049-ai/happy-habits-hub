@@ -59,6 +59,7 @@ const Rewards = lazy(() => import('./pages/Rewards'));
 const Shop = lazy(() => import('./pages/Shop'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 import DailyLoginModal from './components/gamification/DailyLoginModal';
+import MysteryDropHunter from './components/gamification/MysteryDropHunter';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -163,6 +164,7 @@ function AppContent() {
       {!isReaderPage && <BottomNavigation />}
       {!isReaderPage && <UnlimitedDownloadsPrompt />}
       {!isReaderPage && <DailyLoginModal />}
+      {!isReaderPage && <MysteryDropHunter />}
       <BookQuizLauncher />
     </div>
   );

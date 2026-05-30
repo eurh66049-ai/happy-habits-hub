@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import DailyLuckWheel from '@/components/gamification/DailyLuckWheel';
 
 const Rewards: React.FC = () => {
   const { user } = useAuth();
@@ -92,6 +93,9 @@ const Rewards: React.FC = () => {
           <Button variant="outline" className="w-full h-16 text-base"><Trophy className="ml-2" /> لوحة المتصدرين</Button>
         </Link>
       </div>
+
+      {/* عجلة الحظ اليومية */}
+      <DailyLuckWheel />
 
       {/* المهام اليومية */}
       <Card className="p-5 mb-6">
