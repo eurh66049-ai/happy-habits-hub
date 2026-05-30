@@ -6549,6 +6549,8 @@ export type Database = {
         | "daily_tasks_bonus"
         | "shop_purchase"
         | "admin_adjust"
+        | "mystery_drop"
+        | "daily_wheel"
       daily_task_code:
         | "read_new_book"
         | "add_review"
@@ -6572,6 +6574,8 @@ export type Database = {
         | "daily_tasks_bonus"
         | "streak_milestone"
         | "admin_adjust"
+        | "mystery_drop"
+        | "daily_wheel"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6710,6 +6714,8 @@ export const Constants = {
         "daily_tasks_bonus",
         "shop_purchase",
         "admin_adjust",
+        "mystery_drop",
+        "daily_wheel",
       ],
       daily_task_code: [
         "read_new_book",
@@ -6736,6 +6742,8 @@ export const Constants = {
         "daily_tasks_bonus",
         "streak_milestone",
         "admin_adjust",
+        "mystery_drop",
+        "daily_wheel",
       ],
     },
   },
