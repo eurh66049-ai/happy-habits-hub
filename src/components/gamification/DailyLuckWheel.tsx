@@ -106,9 +106,16 @@ const DailyLuckWheel: React.FC = () => {
     if (spinning || alreadySpun) return;
     setSpinning(true);
     setResult(null);
+    // start ticking sound during spin
+    playTick();
+    tickTimerRef.current = setInterval(() => playTick(), 120);
     try {
       const res = await gamification.spinDailyWheel();
       if (!res.spun) {
+        if (tickTimerRef.current) {
+          clearInterval(tickTimerRef.current);
+          tickTimerRef.current = null;
+        }
         if (res.reason === 'already_spun_today') {
           toast.info('لقد دُرت العجلة اليوم! عُد غداً 🌙');
         } else {
@@ -123,6 +130,11 @@ const DailyLuckWheel: React.FC = () => {
       const finalRotation = 360 * 6 + (360 - (idx * segAngle + segAngle / 2));
       setRotation((prev) => prev + finalRotation);
       setTimeout(() => {
+        if (tickTimerRef.current) {
+          clearInterval(tickTimerRef.current);
+          tickTimerRef.current = null;
+        }
+        playWinDing();
         setResult(res);
         setSpinning(false);
         setAlreadySpun(true);
@@ -130,6 +142,10 @@ const DailyLuckWheel: React.FC = () => {
         qc.invalidateQueries({ queryKey: ['gamification', 'state'] });
       }, 4200);
     } catch (e) {
+      if (tickTimerRef.current) {
+        clearInterval(tickTimerRef.current);
+        tickTimerRef.current = null;
+      }
       console.error(e);
       toast.error('حدث خطأ أثناء التدوير');
       setSpinning(false);
