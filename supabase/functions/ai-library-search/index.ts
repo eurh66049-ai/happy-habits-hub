@@ -9,12 +9,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const MISTRAL_API_KEY = Deno.env.get("MISTRAL_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// نموذج قوي يفهم اللغة العربية ونية المستخدم
-const MODEL = "google/gemini-2.5-pro";
+// نموذج Mistral الأقوى — يفهم اللغة العربية ونية المستخدم
+const MODEL = "mistral-large-latest";
 
 interface AIQuery {
   keywords: string[];
@@ -30,10 +30,10 @@ async function interpretQuery(query: string): Promise<AIQuery> {
 - استخرج تصنيفات محتملة (مثل: روايات، تاريخ، فلسفة، تنمية ذاتية، دين، علوم، سياسة، شعر، أطفال).
 - لا تخترع كتباً غير موجودة. ركز على المعاني المرادفة.`;
 
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      Authorization: `Bearer ${MISTRAL_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -83,7 +83,7 @@ async function interpretQuery(query: string): Promise<AIQuery> {
 
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`AI gateway ${res.status}: ${t}`);
+    throw new Error(`Mistral API ${res.status}: ${t}`);
   }
 
   const data = await res.json();
@@ -106,9 +106,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    if (!LOVABLE_API_KEY) {
+    if (!MISTRAL_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "خدمة الذكاء الاصطناعي غير مهيأة" }),
+        JSON.stringify({ error: "مفتاح Mistral غير مهيأ" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
