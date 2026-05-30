@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { Camera, LoaderCircle, Search, Sparkles } from 'lucide-react';
-import SemanticSearchPanel from './SemanticSearchPanel';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -25,50 +24,47 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
   const [imageResults, setImageResults] = useState<any[]>([]);
   const [extractedInfo, setExtractedInfo] = useState<any>(null);
   const [imageSearched, setImageSearched] = useState(false);
-  const [semanticMode, setSemanticMode] = useState(false);
 
-  // Live text search state
+  // حالة البحث الذكي بالذكاء الاصطناعي
   const [searchTerm, setSearchTerm] = useState('');
-  const [textResults, setTextResults] = useState<any[]>([]);
-  const [textSearching, setTextSearching] = useState(false);
+  const [aiResults, setAiResults] = useState<any[]>([]);
+  const [aiSearching, setAiSearching] = useState(false);
+  const [aiInterpretation, setAiInterpretation] = useState<string>('');
+  const [aiSearched, setAiSearched] = useState(false);
 
-  // Live search as user types
-  React.useEffect(() => {
-    if (!searchTerm.trim() || searchTerm.length < 1) {
-      setTextResults([]);
+  const runAISearch = async (q: string) => {
+    const query = q.trim();
+    if (query.length < 2) {
+      toast.error('اكتب سؤالك بوضوح (حرفان على الأقل)');
       return;
     }
-    setTextSearching(true);
-    const timeout = setTimeout(async () => {
-      try {
-        const { data } = await supabase
-          .from('book_submissions')
-          .select('id, title, author, category, cover_image_url, s3_cover_image_url')
-          .eq('status', 'approved')
-          .or(`title.ilike.%${searchTerm}%,author.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`)
-          .order('title', { ascending: true })
-          .limit(8);
-        setTextResults(
-          (data || []).map((b: any) => ({
-            ...b,
-            cover_image_url: b.s3_cover_image_url || b.cover_image_url,
-          })),
-        );
-      } catch (err) {
-        console.error('Search error:', err);
-      } finally {
-        setTextSearching(false);
+    setAiSearching(true);
+    setAiSearched(false);
+    setAiResults([]);
+    setAiInterpretation('');
+    try {
+      const { data, error } = await supabaseFunctions.functions.invoke('ai-library-search', {
+        body: { query, limit: 18 },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        setAiResults(data.results || []);
+        setAiInterpretation(data.interpretation?.explanation || '');
+      } else {
+        toast.error(data?.error || 'تعذر إجراء البحث الذكي');
       }
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [searchTerm]);
+    } catch (err: any) {
+      console.error('AI search error:', err);
+      toast.error(err?.message || 'تعذر إجراء البحث الذكي');
+    } finally {
+      setAiSearching(false);
+      setAiSearched(true);
+    }
+  };
 
   const handleTextSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
-      handleClose();
-    }
+    runAISearch(searchTerm);
   };
 
   const handleClose = () => {
@@ -78,7 +74,9 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
     setExtractedInfo(null);
     setImageSearched(false);
     setSearchTerm('');
-    setTextResults([]);
+    setAiResults([]);
+    setAiInterpretation('');
+    setAiSearched(false);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,32 +155,15 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
     <Dialog open={open} onOpenChange={(v) => !v ? handleClose() : onOpenChange(v)}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-4" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-right">🔍 بحث</DialogTitle>
+          <DialogTitle className="text-right flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            البحث الذكي بالذكاء الاصطناعي
+          </DialogTitle>
         </DialogHeader>
 
-        {/* تبديل بين البحث العادي والبحث الذكي بالمعنى */}
-        <div className="flex gap-1 p-1 bg-muted/40 rounded-xl">
-          <button
-            type="button"
-            onClick={() => setSemanticMode(false)}
-            className={`flex-1 text-xs font-cairo py-1.5 rounded-lg transition-colors ${!semanticMode ? 'bg-card shadow-sm font-bold' : 'text-muted-foreground'}`}
-          >
-            بحث عادي
-          </button>
-          <button
-            type="button"
-            onClick={() => setSemanticMode(true)}
-            className={`flex-1 text-xs font-cairo py-1.5 rounded-lg flex items-center justify-center gap-1 transition-colors ${semanticMode ? 'bg-card shadow-sm font-bold text-primary' : 'text-muted-foreground'}`}
-          >
-            <Sparkles className="h-3 w-3" />
-            بحث بالمعنى
-          </button>
-        </div>
-
-        {semanticMode ? (
-          <SemanticSearchPanel onNavigate={handleClose} />
-        ) : (
-        <>
+        <p className="text-xs text-muted-foreground font-cairo">
+          اسأل بلغتك الطبيعية: "كتاب يتحدث عن مواجهة الخوف"، "روايات لنجيب محفوظ"، "أفضل كتب التنمية الذاتية"...
+        </p>
 
 
         {/* البحث النصي + زر البحث بالصورة */}
@@ -190,13 +171,23 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           <form onSubmit={handleTextSearch} className="flex-1">
             <Input
               name="q"
-              placeholder="ابحث عن كتاب أو مؤلف..."
+              placeholder="اسأل عن أي كتاب بلغتك الطبيعية..."
               className="text-right"
               autoFocus
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </form>
+          <Button
+            type="button"
+            size="icon"
+            onClick={() => runAISearch(searchTerm)}
+            disabled={aiSearching || !searchTerm.trim()}
+            className="h-10 w-10 rounded-full flex-shrink-0"
+            title="بحث ذكي"
+          >
+            {aiSearching ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          </Button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           <Button
             variant="ghost"
@@ -210,26 +201,32 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           </Button>
         </div>
 
-        {/* نتائج البحث النصي المباشر */}
-        {textSearching && searchTerm.trim() && (
+        {/* حالة البحث الذكي */}
+        {aiSearching && (
           <div className="flex items-center justify-center py-4">
             <LoaderCircle className="h-5 w-5 text-primary animate-spin" />
-            <span className="text-muted-foreground text-sm mr-2">جاري البحث...</span>
+            <span className="text-muted-foreground text-sm mr-2">الذكاء الاصطناعي يبحث عن أفضل الكتب لك...</span>
           </div>
         )}
 
-        {!textSearching && searchTerm.trim() && textResults.length > 0 && (
+        {!aiSearching && aiSearched && aiResults.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">تم العثور على {textResults.length} نتيجة</p>
-            {textResults.map((book) => (
+            {aiInterpretation && (
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-2 text-xs text-foreground font-cairo flex gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-primary flex-shrink-0 mt-0.5" />
+                <span>{aiInterpretation}</span>
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground">عثر الذكاء الاصطناعي على {aiResults.length} كتاب مناسب</p>
+            {aiResults.map((book) => (
               <BookResultItem key={book.id} book={book} onClickAction={handleClose} />
             ))}
           </div>
         )}
 
-        {!textSearching && searchTerm.trim().length >= 1 && textResults.length === 0 && (
+        {!aiSearching && aiSearched && aiResults.length === 0 && (
           <div className="text-center py-4">
-            <p className="text-muted-foreground text-sm">لم يتم العثور على نتائج لـ "{searchTerm}"</p>
+            <p className="text-muted-foreground text-sm">لم يجد الذكاء الاصطناعي كتباً مطابقة. جرب صياغة مختلفة.</p>
           </div>
         )}
 
@@ -298,8 +295,6 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             <p className="text-muted-foreground">لم يتم العثور على كتب مطابقة</p>
             <p className="text-muted-foreground text-sm mt-1">جرب صورة أوضح للغلاف</p>
           </div>
-        )}
-        </>
         )}
       </DialogContent>
     </Dialog>
