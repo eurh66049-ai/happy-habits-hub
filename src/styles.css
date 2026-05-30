@@ -63,7 +63,8 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: oklch(0.955 0.006 247.858);
+  
   --foreground: oklch(0.129 0.042 264.695);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
@@ -132,13 +133,11 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
-@layer base {
-  * {
-    border-color: var(--color-border);
-  }
+* {
+  border-color: var(--color-border);
+}
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-  }
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
 }

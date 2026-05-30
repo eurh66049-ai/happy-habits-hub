@@ -1,0 +1,38 @@
+
+CREATE OR REPLACE VIEW public.approved_books AS
+SELECT
+  bs.id,
+  bs.user_id,
+  bs.title,
+  bs.subtitle,
+  bs.author,
+  bs.author_bio,
+  bs.author_image_url,
+  bs.category,
+  bs.publisher,
+  bs.translator,
+  bs.description,
+  bs.publication_year,
+  bs.page_count,
+  bs.language,
+  bs.display_type,
+  bs.cover_image_url,
+  bs.book_file_url,
+  bs.file_type,
+  bs.file_size,
+  bs.file_metadata,
+  bs.rights_confirmation,
+  bs.created_at,
+  bs.reviewed_at,
+  bs.user_email,
+  bs.processing_status,
+  bs.views,
+  bs.rating,
+  bs.slug,
+  true AS is_active,
+  bs.s3_cover_image_url,
+  bs.s3_book_file_url,
+  bs.s3_migrated_at,
+  bs.s3_migration_error
+FROM public.book_submissions bs
+WHERE bs.status = 'approved'::text;

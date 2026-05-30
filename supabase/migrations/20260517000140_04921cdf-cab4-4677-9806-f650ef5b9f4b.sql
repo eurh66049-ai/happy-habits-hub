@@ -1,0 +1,1 @@
+UPDATE book_submissions SET s3_migration_error = NULL WHERE s3_migration_error IS NOT NULL AND ((cover_image_url ILIKE '%supabase.co%' AND s3_cover_image_url IS NULL) OR (book_file_url ILIKE '%supabase.co%' AND s3_book_file_url IS NULL));

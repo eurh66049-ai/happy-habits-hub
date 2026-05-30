@@ -1,0 +1,18 @@
+# منصة كتبي (Kotobi)
+
+> Free Arabic digital library to read and download thousands of books, novels, and PDFs. Includes author pages, categories, quotes, reading clubs, and a community of Arabic readers.
+
+## Pages
+
+- [Home](/): Discover featured books, authors, and categories.
+- [Books by Category](/categories): Browse the full library by category.
+- [Authors](/authors): Browse Arabic authors and their works.
+- [Quotes](/quotes): Curated quotes from books shared by the community.
+- [Reading Clubs](/reading-clubs): Join or create reading clubs.
+- [Daily Messages](/daily-messages): Daily inspirational messages for readers.
+- [Suggestions](/suggestions): Personalized book suggestions.
+- [Upload a Book](/upload-book): Contribute books to the library.
+- [About Us](/about-us): What Kotobi is and the team behind it.
+- [Contact Us](/contact-us): Get in touch.
+- [Privacy Policy](/privacy-policy): How user data is handled.
+- [Terms of Service](/terms-of-service): Rules for using the platform.
