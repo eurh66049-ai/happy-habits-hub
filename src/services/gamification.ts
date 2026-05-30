@@ -41,7 +41,6 @@ export interface GamificationState {
   longest_streak: number;
   last_daily_claim_date: string | null;
   can_claim_daily: boolean;
-  last_wheel_spin_date?: string | null;
   selected_name_color: string | null;
   selected_avatar_frame: string | null;
   selected_profile_background: string | null;

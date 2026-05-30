@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { gamification, type WheelSpinResult } from '@/services/gamification';
-import { useGamificationState } from '@/hooks/useGamification';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 const SEGMENTS: Array<{ label: string; emoji: string; color: string }> = [
   { label: '10 🪙', emoji: '💰', color: '#fbbf24' },
@@ -30,13 +31,28 @@ function indexFromKind(kind: string | undefined): number {
 
 const DailyLuckWheel: React.FC = () => {
   const qc = useQueryClient();
-  const { data: state } = useGamificationState();
+  const { user } = useAuth();
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<WheelSpinResult | null>(null);
+  const [alreadySpun, setAlreadySpun] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10);
-  const alreadySpun = state?.last_wheel_spin_date === today;
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user?.id) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from('user_gamification')
+        .select('last_wheel_spin_date')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      const today = new Date().toISOString().slice(0, 10);
+      setAlreadySpun(data?.last_wheel_spin_date === today);
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   const handleSpin = async () => {
     if (spinning || alreadySpun) return;
@@ -61,6 +77,7 @@ const DailyLuckWheel: React.FC = () => {
       setTimeout(() => {
         setResult(res);
         setSpinning(false);
+        setAlreadySpun(true);
         toast.success(`🎉 ${res.prize_label}`);
         qc.invalidateQueries({ queryKey: ['gamification', 'state'] });
       }, 4200);
